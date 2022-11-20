@@ -1,0 +1,144 @@
+db.restaurants.find( { "borough" : "Brooklyn" } )
+
+db.restaurants.find( { "borough" : "Brooklyn" } ).count()
+
+db.restaurants.find(
+    { "borough" : "Brooklyn",
+      "cuisine" : "Italian" }
+)
+
+db.restaurants.find(
+    { "borough" : "Brooklyn",
+      "cuisine" : "Italian",
+      "address.street" : "5 Avenue" }
+)
+
+""" regex """
+db.restaurants.find(
+    { "borough" : "Brooklyn",
+      "cuisine" : "Italian",
+      "address.street" : "5 Avenue",
+      "name" : /pizza/i }
+)
+""" projection """
+db.getCollection('restaurants').find(
+    { "borough":"Brooklyn",
+     "cuisine":"Italian",
+     "name": /pizza/i,
+     "address.street" : "5 Avenue" },
+    {"name":1})
+
+db.getCollection('restaurants').find(
+    {"borough":"Brooklyn",
+     "cuisine":"Italian",
+     "name":/pizza/i,
+     "address.street" : "5 Avenue"},
+    {"name" : 1,
+     "grades.score" : 1}
+)
+
+db.getCollection('restaurants').find(
+    {"borough":"Brooklyn",
+     "cuisine":"Italian",
+     "name":{"$regex":"^Gina"}, 
+     "address.street" : "5 Avenue"},
+    {"name" : 1, "grades.score" : 1}
+)
+
+""" operateur """
+db.getCollection('restaurants').find(
+    {"borough":"Manhattan",
+     "grades.score":{$lt : 10}
+    },
+    {"name":1,"grades.score":1, "_id":0})
+
+db.getCollection('restaurants').find(
+    {
+        "borough":"Manhattan",
+        "grades.score":{ $lt:10, $not:{$gte:10}}
+    },
+    {"name":1,"grades.score":1, "_id":0})
+
+db.restaurants.find(
+    {
+        "grades.grade" : "C",
+        "grades.score" : {$lt : 40}
+    },
+   {"Grades.grade":1, "grades.score":1, "name" :1, "_id" : 0}    
+);
+
+""" Match element """
+db.restaurants.find({
+    "grades" : {
+           $elemMatch : {
+               "grade" : "C",
+               "score" : {$lt :40}
+           }
+    }
+  },
+  {"grades.grade" : 1,"grades.score" : 1, "name" :1, "_id" : 0}
+);
+
+""" Distinct """
+db.restaurants.distinct("borough")
+
+""" Aggregation """
+db.restaurants.aggregate([
+  {
+    $group: {
+      _id: {
+        cuisine: "$cuisine",
+        borough: "$borough"
+      }
+    }
+  },
+  {
+    "$project": {
+      _id: 0,
+      borough: "$_id.borough",
+      cuisine: "$_id.cuisine"
+    }
+  },
+{
+$sort: {
+    borough:1,
+    cuisine:1
+    }
+}
+])
+
+db.restaurants.aggregate( [
+    { $match : {
+        "grades.0.grade":"C"
+    }},
+    { $project : {
+        "name":1, "borough":1, "_id":0
+    }}
+]);
+
+""" Variables """
+varMatch = { $match : { "grades.0.grade":"C"} };
+varProject = { $project : {"name":1, "borough":1, "_id":0}};
+varSort = { $sort : {"name":1} };
+db.restaurants.aggregate( [ varMatch, varProject, varSort ] );
+
+""" Group / Count with aggregate """
+varGroup = { $group : {"_id" : null, "total" : {$sum : 1} } };
+db.restaurants.aggregate( [varGroup ] );
+
+""" or """
+db.restaurants.countDocuments ({"grades.0.grade":"C"})
+
+""" or """
+db.restaurants.find({"grades.0.grade":"C"}).count()
+
+""" Groupby borough """
+varGroup2 = { $group : {"_id" : "$borough", "total" : {$sum : 1} } };
+db.restaurants.aggregate( [ varMatch, varGroup2 ] );
+
+""" Agregate / unwind / groupby """
+varMatch = {$match:{"moyenne":{"$gt":10}}}
+varUnwind = {$unwind : "$grades"}
+varGroup4 = { $group : {"_id" : "$borough", "moyenne" : {$avg : "$grades.score"} } };
+varSort2 = { $sort : { "moyenne" : -1 } }
+db.restaurants.aggregate( [ varUnwind, varGroup4, varSort2 , varMatch] );

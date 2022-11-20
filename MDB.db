@@ -1,0 +1,26 @@
+-- 1.	Ajouter un nouveau film dans la collection movies
+db.movies.insertOne({"_id": "007",title : "mission impossible",year : 2023,cast :["tom cruise "],imdb :{rating :2,votes :100}})
+-- 2.	Modifier l’année du film ajouté à 2022
+db.movies.updateOne({_id : "007"},{$set : {year : 2022 }})
+-- 3.	Supprimez le film que vous avez ajouté
+db.movies.deleteOne({_id : "007"})
+-- 4.	Remplacer le imdb du film que vous avez ajouté par : {rating:6.3, votes: 759}
+db.movies.replaceOne({"_id": "007"},{_id:"007",title : "mission impossible",year : 2023,cast :["tom cruise "],imdb :{rating :6.3,votes :759}})
+-- 5.	Ajouter  trois films dans la collection movies
+db.movies.insertMany([
+{"_id": "001",title : "f1",year : 2023,cast :["tom cruise "],imdb :{rating :2,votes :100}},
+{"_id": "002",title : "f2",year : 2023,cast :["tom cruise "],imdb :{rating :2,votes :100}},
+{"_id": "003",title : "f3",year : 2023,cast :["tom cruise "],imdb :{rating :2,votes :100}}
+])
+-- 6.	Modifier les titres de tous les films de Tom Hanks à « Title –> Tom Hanks »
+-- Methode 1 
+db.movies.find({cast:/tom hanks/i},{title:1}).toArray().map(function(e){db.movies.updateOne({_id:e._id},{$set:{title:e.title+"—tom hanks"}})})
+-- Methode 2
+db.movies.updateMany({cast: "Tom Hanks"},[{$set:{"title": {$concat:["$title"," -- Tom Hanks"]}}}])
+
+
+-- 7.	Supprimez tous les films qui ont un imdb rating inférieur à 2
+db.movies.deleteMany({"imdb.rating":{$lt:2}})
+
+-- 8.	Faire un bulk write qui contient les questions 4,5 et 6
+db.movies.bulkwrite()

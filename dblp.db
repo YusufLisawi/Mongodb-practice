@@ -1,0 +1,53 @@
+--- 1.	Liste de tous les livres (type « Book ») ;---
+db.lp.find({"type": "Book"})
+
+--- 2.	Liste des publications depuis 2011 ;---
+db.lp.find({type: "Article", year: {$gte : 2011}})
+
+--- 3.	Liste des livres depuis 2014 ;---
+db.lp.find({type: "Book", year: {$gte : 2014}})
+
+--- 4.	Liste des publications de l'auteur « Toru Ishida » ;---
+db.lp.find({type: "Article", authors: "Toru Ishida"})
+
+--- 5.	Liste de tous les éditeurs (type « publisher »), distincts ;---
+db.lp.distinct("publisher")
+
+--- 6.	Liste de tous les auteurs distincts ;---
+db.lp.distinct("authors")
+
+--- 7.	Trier les publications de « Toru Ishida » par titre de livre et par page de début ;---
+db.lp.find({"type": "Article", "authors": "Toru Ishida"}).sort({"title" : 1, "pages.start" : 1})
+
+--- 8.	Projeter le résultat sur le titre de la publication, et les pages ;---
+db.lp.find({"type": "Article", "authors": "Toru Ishida"}, {"title" : 1, "pages.start" : 1}).sort({"title" : 1, "pages.start" : 1})
+
+--- 9.	Compter le nombre de des publications de « Toru Ishida »---
+
+-- m1
+db.lp.find({"type": "Article", "authors": "Toru Ishida"}).count()
+-- m2
+db.lp.countDocuments({"type": "Article", "authors": "Toru Ishida"})
+-- m3
+varMatch = {$match : {"type": "Article", "authors": "Toru Ishida"}};
+varGroup = {$group : {"_id" : null, "total" : {$sum : 1} }};
+-- varProject = {$project : {"total" : 1, "_id" : 0}}
+db.lp.aggregate([varMatch, varGroup, varProject]);
+
+--- 10.	Compter le nombre de ouvrages par type depuis 2011;---
+db.lp.find({"year": {$gte : 2011}}).count()
+
+db.lp.countDocuments({"year": {$gte : 2011}})
+
+varMatch = {$match : {"year": {$gte: 2011}}};
+varGroup = {$group : {"_id" : "$type", "total" : {$sum : 1} }};
+db.lp.aggregate([varMatch, varGroup]);
+
+--- 11.	Donnez pour chaque type le nombre des ouvrages edités depuis 2011, n'affichez que ceux qui dépassent 1000 ---
+varGroup = {$group : {"_id" : "$type", "total" : {$sum : 1} }};
+varMatch = {$match : {"year": {$gte: 2011}}};
+varMatch2 = {$match : {"total" : {$gte : 1000}}}
+db.lp.aggregate([varMatch, varGroup, varMatch2]);
+
+--- 12.	Compter le nombre de ouvrages par auteur et trier le résultat par ordre croissant ; ---
+w
